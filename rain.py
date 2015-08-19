@@ -4,14 +4,37 @@ import datetime
 import csv
 import requests
 import json
+import plotly.plotly as py
+import time
+import csv
 
-#this is setting up the i/o part
 GPIO.setmode(GPIO.BCM)
-
-GPIO.setup(23, GPIO.IN, pull_up_down = GPIO.PUD_DOWN)
+GPIO.setup(26, GPIO.OUT)
+GPIO.setup(23, GPIO.IN, pull_up_down = GPIO.PUD_DOWN) #this is the pin reading the gage
 count = 0
 data = []
 print 'test'
+GPIO.output(26,1) #I put an LED on pin 26 just as a check
+
+#plotly stuff start
+with open('./config.json') as config_file:
+        plotly_user_config = json.load(config_file)
+
+py.sign_in(plotly_user_config['plotly_username'], plotly_user_config['plotly_api_key'])
+
+url = py.plot([
+        {
+                'x':[], 'y':[], 'type': 'scatter',
+                'stream':
+                        {'token': plotly_user_config['plotly_streaming_tokens'][0]
+        }
+}], filename='Raspberry Pi Streaming Example Values')
+
+print 'View your streaming graph here: ', url
+
+stream = py.Stream(plotly_user_config['plotly_streaming_tokens'][0])
+stream.open()
+#plotly stuff end
 
 def timestamp():
         pass
@@ -21,13 +44,17 @@ def raining(channel):
         global count
         count += 1
 	print 'count: ', count
-        timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         global data
+	timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         data.append({'datetime':timestamp, 'count': count/100.0})
-        print 'data: ', data
+	with open('../raindata.csv', 'a') as csvfile:
+		w = csv.writer(csvfile, delimiter=',')
+		w.writerow([timestamp, count/100.0])        
+	print 'data: ', data
 	if count % 10 == 0:
                 submitData(data)
 	        data = []
+		count = 0		
 
 def submitData(datalist):
         json_data = json.dumps(datalist)
@@ -41,7 +68,12 @@ def submitData(datalist):
 GPIO.add_event_detect(23, GPIO.RISING, callback=raining, bouncetime=300)
 
 while True:
-        pass
+	timestamp2=datetime.datetime.now()
+	stream.write({'x':timestamp2,'y': count})
+        with open('../batdata.csv', 'a') as csvfile:
+                w = csv.writer(csvfile, delimiter=',')
+                w.writerow([timestamp2])
+	time.sleep(0.5)
 
 GPIO.cleanup()
 
