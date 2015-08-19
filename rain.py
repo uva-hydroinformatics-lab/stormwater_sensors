@@ -5,6 +5,7 @@ import csv
 import requests
 import json
 
+#this is setting up the i/o part
 GPIO.setmode(GPIO.BCM)
 
 GPIO.setup(23, GPIO.IN, pull_up_down = GPIO.PUD_DOWN)
