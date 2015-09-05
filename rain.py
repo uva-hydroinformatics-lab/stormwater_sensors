@@ -51,10 +51,10 @@ def raining(channel):
 		w = csv.writer(csvfile, delimiter=',')
 		w.writerow([timestamp, count/100.0])        
 	print 'data: ', data
-	if count % 10 == 0:
+	if count % 5  == 0:
                 submitData(data)
 	        data = []
-		count = 0		
+	
 
 def submitData(datalist):
         json_data = json.dumps(datalist)
@@ -74,6 +74,9 @@ while True:
                 w = csv.writer(csvfile, delimiter=',')
                 w.writerow([timestamp2])
 	time.sleep(0.5)
+	if datetime.datetime.now().minute%5==0 and len(data)>0:
+		submitData(data)
+		data=[]
 
 GPIO.cleanup()
 
