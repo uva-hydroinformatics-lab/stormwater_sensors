@@ -45,8 +45,8 @@ def raining(channel):
         count += 1
 	print 'count: ', count
         global data
-	timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        data.append({'datetime':timestamp, 'count': count/100.0})
+	timestamp = datetime.datetime.now()
+        data.append({'datetime':timestamp.strftime('%Y-%m-%d %H:%M:%S'), 'count': count/100.0})
 	with open('../raindata.csv', 'a') as csvfile:
 		w = csv.writer(csvfile, delimiter=',')
 		w.writerow([timestamp, count/100.0])        
@@ -74,9 +74,14 @@ while True:
                 w = csv.writer(csvfile, delimiter=',')
                 w.writerow([timestamp2])
 	time.sleep(0.5)
-	if datetime.datetime.now().minute%5==0 and len(data)>0:
-		submitData(data)
-		data=[]
+	if len(data)>0:
+		last_time_string = data[len(data)-1].get('datetime')
+		last_time_minute = time.strptime(last_time_string, '%Y-%m-%d %H:%M:%S').tm_min 
+		current_minute = datetime.datetime.now().minute
+		current_minute = current_minute if current_minute>4 else current_minute+60 	
+		if current_minute - last_time_minute>4:
+			submitData(data)
+			data=[]
 
 GPIO.cleanup()
 
