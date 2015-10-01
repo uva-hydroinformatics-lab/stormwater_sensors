@@ -52,16 +52,18 @@ def raining(channel):
 		w.writerow([timestamp, count/100.0])        
 	print 'data: ', data
 	if count % 5  == 0:
-                submitData(data)
-	        data = []
-	
+                status = submitData(data)
+		if status == 200 or status == 202:
+			data = []
+	        	
 
 def submitData(datalist):
         json_data = json.dumps(datalist)
 	print 'posting data'
         r = requests.post('http://54.186.3.124/submitRainData.php', data={'results':json_data})
 	print 'the request has been submitted. here is the response', r.text
-
+	print 'the response code is : ', r.status_code
+	return r.status_code
 
 
 
@@ -80,8 +82,10 @@ while True:
 		current_minute = datetime.datetime.now().minute
 		current_minute = current_minute if current_minute>4 else current_minute+60 	
 		if current_minute - last_time_minute>4:
-			submitData(data)
-			data=[]
+			status = submitData(data)
+			if status == 202 or status == 200:
+				data = []
+			
 
 GPIO.cleanup()
 
